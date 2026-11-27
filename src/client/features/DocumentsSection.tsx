@@ -16,6 +16,7 @@ import {
 import { fileKind, formatBytes, formatDate } from "@/client/lib/format";
 import { Section } from "./Section";
 import type { BookingData } from "./types";
+import { t } from "@/lib/i18n";
 
 type Attachment = BookingData["attachments"][number];
 const MAX = 20 * 1024 * 1024;
@@ -29,7 +30,7 @@ export function DocumentsSection({ data }: { data: BookingData }) {
   const bookingId = data.booking.id;
 
   async function upload(file: File) {
-    if (file.size > MAX) return toast.error("Files can be up to 20 MB");
+    if (file.size > MAX) return toast.error(t("Files can be up to 20 MB"));
     setUploading(true);
     try {
       const body = new FormData();
@@ -42,7 +43,7 @@ export function DocumentsSection({ data }: { data: BookingData }) {
         const answer = (await response.json().catch(() => null)) as {
           error?: string;
         } | null;
-        toast.error(answer?.error ?? "The upload failed");
+        toast.error(t(answer?.error ?? "The upload failed"));
       }
       await router.invalidate();
     } finally {
@@ -64,7 +65,7 @@ export function DocumentsSection({ data }: { data: BookingData }) {
 
   return (
     <Section
-      title="Documents"
+      title={t("Documents")}
       actions={
         <>
           <Link
@@ -73,7 +74,7 @@ export function DocumentsSection({ data }: { data: BookingData }) {
             className={buttonVariants({ variant: "outline", size: "sm" })}
           >
             <FileText data-icon="inline-start" />
-            Bill of lading
+            {t("Bill of lading")}
           </Link>
           <Button
             variant="outline"
@@ -82,7 +83,7 @@ export function DocumentsSection({ data }: { data: BookingData }) {
             onClick={() => input.current?.click()}
           >
             <Upload data-icon="inline-start" />
-            Upload file
+            {t("Upload file")}
           </Button>
           <input
             ref={input}
@@ -100,20 +101,20 @@ export function DocumentsSection({ data }: { data: BookingData }) {
     >
       {data.attachments.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          No files yet. Upload PDFs or images up to 20 MB.
+          {t("No files yet. Upload PDFs or images up to 20 MB.")}
         </p>
       ) : (
         <TableCard>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead className="text-right">Size</TableHead>
-                <TableHead>Uploaded by</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead>{t("Name")}</TableHead>
+                <TableHead>{t("Type")}</TableHead>
+                <TableHead className="text-end">{t("Size")}</TableHead>
+                <TableHead>{t("Uploaded by")}</TableHead>
+                <TableHead>{t("Date")}</TableHead>
                 <TableHead>
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">{t("Actions")}</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -124,7 +125,7 @@ export function DocumentsSection({ data }: { data: BookingData }) {
                     {attachment.name}
                   </TableCell>
                   <TableCell>{fileKind(attachment.contentType)}</TableCell>
-                  <TableCell className="text-right tabular-nums">
+                  <TableCell className="text-end tabular-nums">
                     {formatBytes(attachment.size)}
                   </TableCell>
                   <TableCell>{attachment.uploader ?? ""}</TableCell>
@@ -138,7 +139,7 @@ export function DocumentsSection({ data }: { data: BookingData }) {
                           size: "sm",
                         })}
                       >
-                        Download
+                        {t("Download")}
                       </a>
                       {attachment.canDelete ? (
                         <Button
@@ -146,7 +147,7 @@ export function DocumentsSection({ data }: { data: BookingData }) {
                           size="sm"
                           onClick={() => setDeleting(attachment)}
                         >
-                          Delete
+                          {t("Delete")}
                         </Button>
                       ) : null}
                     </div>
@@ -160,7 +161,7 @@ export function DocumentsSection({ data }: { data: BookingData }) {
       {deleting ? (
         <ConfirmDialog
           title={`Delete ${deleting.name}?`}
-          confirmLabel="Delete file"
+          confirmLabel={t("Delete file")}
           destructive
           pending={pending}
           onClose={() => setDeleting(null)}

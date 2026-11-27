@@ -166,6 +166,13 @@ export const invoices = sqliteTable(
     creditsInvoiceId: text("credits_invoice_id"),
     issueDate: text("issue_date").notNull(),
     dueDate: text("due_date"),
+    /** Tax in basis points (1000 = 10%), applied to the lines of each currency. */
+    taxBps: integer("tax_bps").notNull().default(0),
+    /** One fee on the invoice, in its own currency (empty when none). */
+    feeMinor: integer("fee_minor").notNull().default(0),
+    feeCurrency: text("fee_currency").notNull().default(""),
+    /** Typed by the user: Sudanese pounds for 1 US dollar. Empty when none. */
+    exchangeRate: text("exchange_rate").notNull().default(""),
     createdAt: createdAt(),
   },
   (t) => [
@@ -205,4 +212,136 @@ export const attachments = sqliteTable(
     createdAt: createdAt(),
   },
   (t) => [index("attachments_booking").on(t.bookingId)],
+);
+
+/** Company details printed on invoices and bills of lading: one row per organization. */
+export const companySettings = sqliteTable("company_settings", {
+  orgId: text("org_id").primaryKey(),
+  name: text("name").notNull().default(""),
+  address: text("address").notNull().default(""),
+  phone: text("phone").notNull().default(""),
+  email: text("email").notNull().default(""),
+  taxId: text("tax_id").notNull().default(""),
+  /** The logo as a data URL (PNG, JPEG or SVG, up to 200 KB). */
+  logo: text("logo").notNull().default(""),
+  /** Tax suggested on each new invoice, in basis points (1000 = 10%). */
+  defaultTaxBps: integer("default_tax_bps").notNull().default(0),
+  updatedAt: createdAt(),
+});
+
+/**
+ * Messages to customers about a booking's progress. Every message is recorded
+ * here; "logged" means no provider sent it (the default, nothing leaves the app).
+ */
+export const notifications = sqliteTable(
+  "notifications",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id").notNull(),
+    bookingId: text("booking_id").notNull(),
+    recipient: text("recipient").notNull(),
+    subject: text("subject").notNull(),
+    body: text("body").notNull(),
+    provider: text("provider").notNull(),
+    state: text("state").notNull(),
+    error: text("error").notNull().default(""),
+    createdAt: createdAt(),
+  },
+  (t) => [index("notifications_booking").on(t.bookingId)],
+);
+
+/** Storage yards (ported from SWAKEN): where vehicles wait before release. */
+export const yards = sqliteTable(
+  "yards",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id").notNull(),
+    code: text("code").notNull(),
+    name: text("name").notNull(),
+    city: text("city").notNull().default(""),
+    address: text("address").notNull().default(""),
+    capacity: integer("capacity").notNull().default(100),
+    /** active | closed */
+    status: text("status").notNull().default("active"),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("yards_org_code").on(t.orgId, t.code)],
+);
+
+/**
+ * The append-only movement history of a yard: gate entry and exit, and moves
+ * between slots or yards. A vehicle is in a yard when its latest event there is
+ * not an exit.
+ */
+export const yardEvents = sqliteTable(
+  "yard_events",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id").notNull(),
+    yardId: text("yard_id")
+      .notNull()
+      .references(() => yards.id, { onDelete: "cascade" }),
+    vin: text("vin").notNull(),
+    /** entry | exit | move */
+    kind: text("kind").notNull(),
+    zone: text("zone").notNull().default(""),
+    slot: text("slot").notNull().default(""),
+    gate: text("gate").notNull().default(""),
+    driverName: text("driver_name").notNull().default(""),
+    carrier: text("carrier").notNull().default(""),
+    truckPlate: text("truck_plate").notNull().default(""),
+    sealNumber: text("seal_number").notNull().default(""),
+    notes: text("notes").notNull().default(""),
+    actorEmail: text("actor_email").notNull().default(""),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("yard_events_org_vin").on(t.orgId, t.vin),
+    index("yard_events_yard").on(t.yardId),
+  ],
+);
+
+export const inspections = sqliteTable(
+  "inspections",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id").notNull(),
+    yardId: text("yard_id").references(() => yards.id, {
+      onDelete: "set null",
+    }),
+    vin: text("vin").notNull(),
+    /** gate_in | storage | gate_out */
+    stage: text("stage").notNull().default("gate_in"),
+    /** good | fair | damaged */
+    condition: text("condition").notNull().default("good"),
+    odometerKm: integer("odometer_km"),
+    fuelPercent: integer("fuel_percent"),
+    damageNotes: text("damage_notes").notNull().default(""),
+    inspectorEmail: text("inspector_email").notNull().default(""),
+    createdAt: createdAt(),
+  },
+  (t) => [index("inspections_org_vin").on(t.orgId, t.vin)],
+);
+
+export const releaseRequests = sqliteTable(
+  "release_requests",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id").notNull(),
+    yardId: text("yard_id").references(() => yards.id, {
+      onDelete: "set null",
+    }),
+    vin: text("vin").notNull(),
+    customerName: text("customer_name").notNull().default(""),
+    recipientName: text("recipient_name").notNull(),
+    recipientId: text("recipient_id").notNull().default(""),
+    recipientPhone: text("recipient_phone").notNull().default(""),
+    pickupDate: text("pickup_date").notNull().default(""),
+    /** pending | approved | rejected | released */
+    status: text("status").notNull().default("pending"),
+    reviewNotes: text("review_notes").notNull().default(""),
+    requestedBy: text("requested_by").notNull().default(""),
+    createdAt: createdAt(),
+  },
+  (t) => [index("release_requests_org").on(t.orgId, t.status)],
 );

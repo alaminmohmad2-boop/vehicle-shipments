@@ -3,6 +3,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/client/components/ui/toggle-group";
+import { t } from "@/lib/i18n";
 
 interface SegmentedToggleItem<T extends string> {
   value: T;
@@ -40,8 +41,8 @@ export function SegmentedToggle<T extends string>({
         <ToggleGroupItem
           key={item.value}
           value={item.value}
-          aria-label={showLabels ? undefined : item.label}
-          title={item.label}
+          aria-label={showLabels ? undefined : t(item.label)}
+          title={t(item.label)}
           className="h-[22px] text-muted-foreground aria-pressed:bg-primary/15 aria-pressed:text-primary"
         >
           {item.icon}
@@ -49,7 +50,7 @@ export function SegmentedToggle<T extends string>({
             // Trim the line box to cap height so the text centers optically
             // with the icon instead of riding high on the font's ascender.
             <span className="[text-box:trim-both_cap_alphabetic]">
-              {item.label}
+              {t(item.label)}
             </span>
           )}
         </ToggleGroupItem>

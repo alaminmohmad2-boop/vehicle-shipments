@@ -13,6 +13,7 @@ import { STATUSES, STATUS_LABELS, type Status } from "@/lib/shipping";
 import { recordStatus } from "@/serverFunctions/bookings";
 import { Section } from "./Section";
 import type { BookingData } from "./types";
+import { t } from "@/lib/i18n";
 
 const next = (status: string): Status => {
   const index = STATUSES.indexOf(status as Status);
@@ -45,12 +46,12 @@ export function StatusSection({ data }: { data: BookingData }) {
   }
 
   return (
-    <Section title="Status">
+    <Section title={t("Status")}>
       <form
         onSubmit={submit}
         className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2"
       >
-        <Field label="Status">
+        <Field label={t("Status")}>
           <NativeSelect
             value={form.status}
             onChange={(event) =>
@@ -64,7 +65,7 @@ export function StatusSection({ data }: { data: BookingData }) {
             ))}
           </NativeSelect>
         </Field>
-        <Field label="Date and time">
+        <Field label={t("Date and time")}>
           <Input
             type="datetime-local"
             value={form.occurredAt}
@@ -73,7 +74,7 @@ export function StatusSection({ data }: { data: BookingData }) {
             }
           />
         </Field>
-        <Field label="Location">
+        <Field label={t("Location")}>
           <Input
             value={form.location}
             onChange={(event) =>
@@ -81,7 +82,7 @@ export function StatusSection({ data }: { data: BookingData }) {
             }
           />
         </Field>
-        <Field label="Note">
+        <Field label={t("Note")}>
           <Input
             value={form.note}
             onChange={(event) => setForm({ ...form, note: event.target.value })}
@@ -89,11 +90,11 @@ export function StatusSection({ data }: { data: BookingData }) {
         </Field>
         <div className="sm:col-span-2">
           <Button type="submit" pending={pending}>
-            Record status
+            {t("Record status")}
           </Button>
         </div>
       </form>
-      <ol className="space-y-3 border-l border-border pl-4">
+      <ol className="space-y-3 border-s border-border ps-4">
         {data.events.map((event) => (
           <li key={event.id} data-testid="status-event" className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">

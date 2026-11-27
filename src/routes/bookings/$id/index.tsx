@@ -20,6 +20,8 @@ import {
   getBooking,
   reopenBooking,
 } from "@/serverFunctions/bookings";
+import { NotificationsSection } from "@/client/features/NotificationsSection";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/bookings/$id/")({
   loader: ({ params }) => getBooking({ data: { id: params.id } }),
@@ -38,16 +40,16 @@ function BookingPage() {
   const navigate = useNavigate();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const { run, pending } = useAction();
-  const back = <BackLink to="/">Bookings</BackLink>;
+  const back = <BackLink to="/">{t("Bookings")}</BackLink>;
 
   if (!data) {
     return (
       <AppShell>
-        <PageHeader title="Booking" backLink={back} />
+        <PageHeader title={t("Booking")} backLink={back} />
         <EmptyState
           kind="error"
-          title="Booking not found"
-          description="It was deleted, or it isn't one of yours."
+          title={t("Booking not found")}
+          description={t("It was deleted, or it isn't one of yours.")}
         />
       </AppShell>
     );
@@ -72,7 +74,7 @@ function BookingPage() {
         actions={
           <Button variant="outline" onClick={() => setConfirmDelete(true)}>
             <Trash2 data-icon="inline-start" />
-            Delete booking
+            {t("Delete booking")}
           </Button>
         }
       />
@@ -88,10 +90,11 @@ function BookingPage() {
       <BillingSection data={data} />
       <DocumentsSection data={data} />
       <TrackingSection data={data} />
+      <NotificationsSection data={data} />
       {confirmDelete ? (
         <ConfirmDialog
           title={`Delete ${booking.number}?`}
-          confirmLabel="Delete booking"
+          confirmLabel={t("Delete booking")}
           destructive
           pending={pending}
           onClose={() => setConfirmDelete(false)}
@@ -102,7 +105,7 @@ function BookingPage() {
             if (done) await navigate({ to: "/" });
           }}
         >
-          Its vehicles, history, invoices and files are deleted too.
+          {t("Its vehicles, history, invoices and files are deleted too.")}
         </ConfirmDialog>
       ) : null}
     </AppShell>

@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/client/components/ui/dialog";
+import { t } from "@/lib/i18n";
 
 /** A dialog around a form: fields, then Cancel and the submit button. */
 export function FormDialog({
@@ -43,7 +44,7 @@ export function FormDialog({
           }}
         >
           <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
+            <DialogTitle>{t(title)}</DialogTitle>
           </DialogHeader>
           {children}
           <DialogFooter>
@@ -53,10 +54,10 @@ export function FormDialog({
               onClick={onClose}
               disabled={pending}
             >
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button type="submit" pending={pending}>
-              {submitLabel}
+              {t(submitLabel)}
             </Button>
           </DialogFooter>
         </form>

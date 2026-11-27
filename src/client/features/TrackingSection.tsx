@@ -7,12 +7,13 @@ import {
 } from "@/serverFunctions/bookings";
 import { Section } from "./Section";
 import type { BookingData } from "./types";
+import { t } from "@/lib/i18n";
 
 export function TrackingSection({ data }: { data: BookingData }) {
   const { run, pending } = useAction();
   const id = data.booking.id;
   return (
-    <Section title="Tracking link">
+    <Section title={t("Tracking link")}>
       {data.trackingUrl ? (
         <div className="space-y-3 rounded-xl border border-border bg-card p-4">
           <div className="flex items-center gap-2">
@@ -22,11 +23,15 @@ export function TrackingSection({ data }: { data: BookingData }) {
             >
               {data.trackingUrl}
             </code>
-            <CopyButton value={data.trackingUrl} successMessage="Link copied" />
+            <CopyButton
+              value={data.trackingUrl}
+              successMessage={t("Link copied")}
+            />
           </div>
           <p className="text-sm text-muted-foreground">
-            Anyone with the link sees the route, milestones and vehicles, but no
-            prices, files, notes or customer details.
+            {t(
+              "Anyone with the link sees the route, milestones and vehicles, but no prices, files, notes or customer details.",
+            )}
           </p>
           <div className="flex flex-wrap gap-2">
             <Button
@@ -35,7 +40,7 @@ export function TrackingSection({ data }: { data: BookingData }) {
               disabled={pending}
               onClick={() => run(() => renewTrackingLink({ data: { id } }))}
             >
-              New link
+              {t("New link")}
             </Button>
             <Button
               variant="outline"
@@ -43,11 +48,11 @@ export function TrackingSection({ data }: { data: BookingData }) {
               disabled={pending}
               onClick={() => run(() => revokeTrackingLink({ data: { id } }))}
             >
-              Turn off link
+              {t("Turn off link")}
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Either one stops the current link working.
+            {t("Either one stops the current link working.")}
           </p>
         </div>
       ) : (
@@ -57,7 +62,7 @@ export function TrackingSection({ data }: { data: BookingData }) {
           pending={pending}
           onClick={() => run(() => renewTrackingLink({ data: { id } }))}
         >
-          Create tracking link
+          {t("Create tracking link")}
         </Button>
       )}
     </Section>

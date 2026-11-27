@@ -2,6 +2,7 @@ import { Field } from "@/client/components/Field";
 import { Input } from "@/client/components/ui/input";
 import { Textarea } from "@/client/components/ui/textarea";
 import type { BookingFields as Values } from "@/lib/shipping";
+import { t } from "@/lib/i18n";
 
 export type BookingValues = Required<Values>;
 
@@ -32,26 +33,26 @@ export function BookingFieldset({
   });
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <Field label="Customer name" error={errors.customerName}>
+      <Field label={t("Customer name")} error={errors.customerName}>
         <Input {...bind("customerName")} autoComplete="organization" />
       </Field>
-      <Field label="Customer email" error={errors.customerEmail}>
+      <Field label={t("Customer email")} error={errors.customerEmail}>
         <Input {...bind("customerEmail")} type="email" autoComplete="email" />
       </Field>
-      <Field label="Consignee" error={errors.consignee}>
+      <Field label={t("Consignee")} error={errors.consignee}>
         <Input {...bind("consignee")} />
       </Field>
-      <Field label="Carrier" error={errors.carrier}>
+      <Field label={t("Carrier")} error={errors.carrier}>
         <Input {...bind("carrier")} />
       </Field>
-      <Field label="Vessel" error={errors.vessel}>
+      <Field label={t("Vessel")} error={errors.vessel}>
         <Input {...bind("vessel")} />
       </Field>
-      <Field label="Voyage" error={errors.voyage}>
+      <Field label={t("Voyage")} error={errors.voyage}>
         <Input {...bind("voyage")} />
       </Field>
       <Field
-        label="Cargo notes"
+        label={t("Cargo notes")}
         error={errors.cargoNotes}
         className="sm:col-span-2"
       >
@@ -95,23 +96,23 @@ export function LegFieldset({
   });
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      <Field label="From port" error={errors[`${prefix}fromPort`]}>
+      <Field label={t("From port")} error={errors[`${prefix}fromPort`]}>
         <Input {...bind("fromPort")} />
       </Field>
-      <Field label="To port" error={errors[`${prefix}toPort`]}>
+      <Field label={t("To port")} error={errors[`${prefix}toPort`]}>
         <Input {...bind("toPort")} />
       </Field>
       <Field
-        label="Vessel / voyage"
+        label={t("Vessel / voyage")}
         error={errors[`${prefix}vesselVoyage`]}
         className="sm:col-span-2"
       >
         <Input {...bind("vesselVoyage")} />
       </Field>
-      <Field label="ETD" error={errors[`${prefix}etd`]}>
+      <Field label={t("ETD")} error={errors[`${prefix}etd`]}>
         <Input {...bind("etd")} type="date" />
       </Field>
-      <Field label="ETA" error={errors[`${prefix}eta`]}>
+      <Field label={t("ETA")} error={errors[`${prefix}eta`]}>
         <Input {...bind("eta")} type="date" />
       </Field>
     </div>

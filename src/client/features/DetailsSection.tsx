@@ -8,6 +8,7 @@ import { updateBooking } from "@/serverFunctions/bookings";
 import { BookingFieldset, type BookingValues } from "./BookingFields";
 import { Section } from "./Section";
 import type { BookingData } from "./types";
+import { t } from "@/lib/i18n";
 
 export function DetailsSection({ data }: { data: BookingData }) {
   const { booking } = data;
@@ -24,11 +25,11 @@ export function DetailsSection({ data }: { data: BookingData }) {
   if (data.isAdmin && booking.owner) rows.push(["Created by", booking.owner]);
   return (
     <Section
-      title="Details"
+      title={t("Details")}
       actions={
         <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
           <Pencil data-icon="inline-start" />
-          Edit details
+          {t("Edit details")}
         </Button>
       }
     >
@@ -41,7 +42,7 @@ export function DetailsSection({ data }: { data: BookingData }) {
             key={label}
             className={label === "Cargo notes" ? "sm:col-span-2" : undefined}
           >
-            <dt className="text-muted-foreground">{label}</dt>
+            <dt className="text-muted-foreground">{t(label)}</dt>
             <dd className="break-words whitespace-pre-wrap">{value || "—"}</dd>
           </div>
         ))}
@@ -74,8 +75,8 @@ function EditDetails({
   const { run, pending } = useAction();
   return (
     <FormDialog
-      title="Edit details"
-      submitLabel="Save details"
+      title={t("Edit details")}
+      submitLabel={t("Save details")}
       pending={pending}
       wide
       onClose={onClose}

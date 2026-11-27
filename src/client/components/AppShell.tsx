@@ -1,7 +1,18 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ChevronLeft } from "lucide-react";
+import {
+  ChevronLeft,
+  FileBarChart,
+  LayoutDashboard,
+  Package,
+  Settings,
+  Ship,
+  Tags,
+  Warehouse,
+} from "lucide-react";
 import type { ReactNode } from "react";
+import { LanguageSwitch } from "@/client/components/LanguageSwitch";
 import { ThemePreferenceRadio } from "@/client/components/ThemePreferenceMenuItems";
+import { t } from "@/lib/i18n";
 
 /**
  * The frame every page sits in: a bar with the way back to the Gateway and
@@ -11,7 +22,7 @@ import { ThemePreferenceRadio } from "@/client/components/ThemePreferenceMenuIte
  * `nav`.
  */
 export function AppShell({
-  nav = <AppNav />,
+  nav,
   wide = false,
   children,
 }: {
@@ -20,7 +31,6 @@ export function AppShell({
   wide?: boolean;
   children: ReactNode;
 }) {
-  // From the root route's loader (src/serverFunctions/gateway.ts).
   const gatewayUrl = useRouterState({
     select: (state) => {
       const root = state.matches[0]?.loaderData;
@@ -28,29 +38,51 @@ export function AppShell({
     },
   });
   return (
-    <div className="flex h-dvh flex-col print:block print:h-auto">
-      <header className="shrink-0 border-b border-border print:hidden">
-        <div
-          className={`${column(wide)} flex h-12 items-center justify-between gap-3`}
-        >
-          <div className="flex min-w-0 items-center gap-4">
-            {gatewayUrl ? (
-              <a
-                href={gatewayUrl}
-                className="inline-flex shrink-0 items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <ChevronLeft className="size-4" aria-hidden />
-                All apps
-              </a>
-            ) : null}
-            {nav}
-          </div>
-          <ThemePreferenceRadio />
+    <div className="flex h-dvh flex-col lg:flex-row print:block print:h-auto">
+      <aside className="hidden w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground lg:flex print:hidden">
+        <div className="flex h-16 items-center gap-3 px-5">
+          <span className="flex size-9 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+            <Ship className="size-5" aria-hidden />
+          </span>
+          <span className="text-base font-semibold leading-tight">
+            {t("Vehicle Shipments")}
+          </span>
         </div>
+        <div className="flex-1 overflow-y-auto px-3 py-2">
+          {nav ?? <AppNav vertical />}
+        </div>
+        <div className="space-y-3 border-t border-sidebar-border p-4">
+          <div className="flex items-center justify-between gap-2">
+            <LanguageSwitch />
+            <ThemePreferenceRadio />
+          </div>
+          {gatewayUrl ? (
+            <a
+              href={gatewayUrl}
+              className="inline-flex items-center gap-1 text-xs text-sidebar-foreground/70 transition-colors hover:text-sidebar-foreground"
+            >
+              <ChevronLeft className="size-4 rtl:rotate-180" aria-hidden />
+              {t("All apps")}
+            </a>
+          ) : null}
+        </div>
+      </aside>
+      <header className="shrink-0 bg-sidebar text-sidebar-foreground lg:hidden print:hidden">
+        <div className="flex h-12 items-center justify-between gap-3 px-4">
+          <span className="flex items-center gap-2 text-sm font-semibold">
+            <Ship className="size-4" aria-hidden />
+            {t("Vehicle Shipments")}
+          </span>
+          <div className="flex items-center gap-2">
+            <LanguageSwitch />
+            <ThemePreferenceRadio />
+          </div>
+        </div>
+        <div className="overflow-x-auto px-2 pb-2">{nav ?? <AppNav />}</div>
       </header>
-      <div className="min-h-0 flex-1 overflow-y-auto print:overflow-visible">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto print:overflow-visible">
         <main
-          className={`${column(wide)} space-y-10 pt-8 pb-24 md:pt-10 print:pt-0 print:pb-0`}
+          className={`mx-auto w-full ${wide ? "max-w-7xl" : "max-w-4xl"} space-y-8 px-4 pt-6 pb-24 md:px-10 md:pt-10 print:max-w-none print:p-0`}
         >
           {children}
         </main>
@@ -59,22 +91,34 @@ export function AppShell({
   );
 }
 
-/** The column the bar and the page share. */
-const column = (wide: boolean) =>
-  `mx-auto w-full ${wide ? "max-w-6xl" : "max-w-3xl"} px-4 md:px-10`;
+const ITEMS = [
+  { to: "/", label: "Bookings", icon: Package, exact: true },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/yard", label: "Yard", icon: Warehouse },
+  { to: "/reports", label: "Reports", icon: FileBarChart },
+  { to: "/tariffs", label: "Tariffs", icon: Tags },
+  { to: "/settings", label: "Company", icon: Settings },
+] as const;
 
-/** The app's two sections. */
-function AppNav() {
+/** The app's sections. */
+function AppNav({ vertical = false }: { vertical?: boolean }) {
   const linkClass =
-    "text-sm text-muted-foreground transition-colors hover:text-foreground data-[status=active]:font-medium data-[status=active]:text-foreground";
+    "flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[status=active]:bg-sidebar-primary data-[status=active]:font-medium data-[status=active]:text-sidebar-primary-foreground";
   return (
-    <nav className="flex items-center gap-4">
-      <Link to="/" className={linkClass} activeOptions={{ exact: true }}>
-        Bookings
-      </Link>
-      <Link to="/tariffs" className={linkClass}>
-        Tariffs
-      </Link>
+    <nav
+      className={vertical ? "flex flex-col gap-1" : "flex items-center gap-1"}
+    >
+      {ITEMS.map(({ to, label, icon: Icon, ...rest }) => (
+        <Link
+          key={to}
+          to={to}
+          className={linkClass}
+          activeOptions={"exact" in rest ? { exact: true } : undefined}
+        >
+          <Icon className="size-4 shrink-0" aria-hidden />
+          {t(label)}
+        </Link>
+      ))}
     </nav>
   );
 }

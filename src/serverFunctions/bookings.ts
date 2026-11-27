@@ -1,4 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
+import { decodeVin } from "@/server/vin";
+import { listNotifications } from "@/server/notify";
 import { getRequest } from "@tanstack/react-start/server";
 import { ensureUserMiddleware } from "@every-app/sdk/tanstack-start";
 import { isAdmin } from "@every-app/sdk/server";
@@ -37,6 +39,7 @@ export const getBooking = createServerFn({ method: "GET" })
       ...rest,
       trackingUrl,
       billing: await billing.getBilling(context.user, data.id),
+      notifications: await listNotifications(data.id),
       isAdmin: isAdmin(context.user),
     };
   });
@@ -103,3 +106,10 @@ export const revokeTrackingLink = createServerFn({ method: "POST" })
   .handler(({ data, context }) =>
     tracking.revokeTrackingLink(context.user, data.id),
   );
+
+export const lookupVin = createServerFn({ method: "POST" })
+  .middleware([ensureUserMiddleware])
+  .validator((data: unknown) =>
+    z.object({ vin: z.string().max(30) }).parse(data),
+  )
+  .handler(({ data }) => decodeVin(data.vin));

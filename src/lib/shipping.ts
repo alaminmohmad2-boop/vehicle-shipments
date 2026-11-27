@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { t } from "@/lib/i18n";
 
 // Shared by pages and the server: the milestones, the field rules and money.
 
@@ -13,7 +14,7 @@ export const STATUSES = [
 ] as const;
 export type Status = (typeof STATUSES)[number];
 
-export const STATUS_LABELS: Record<Status, string> = {
+const STATUS_EN: Record<Status, string> = {
   booked: "Booked",
   documents_ready: "Documents ready",
   customs_cleared: "Customs cleared",
@@ -22,6 +23,10 @@ export const STATUS_LABELS: Record<Status, string> = {
   delivered: "Delivered",
   cancelled: "Cancelled",
 };
+
+export const STATUS_LABELS = new Proxy(STATUS_EN, {
+  get: (o, k) => t(o[k as Status] ?? String(k)),
+});
 
 /** Bookings in these states keep their vehicles as they are until reopened. */
 export const LOCKED_STATUSES: readonly Status[] = ["delivered", "cancelled"];
@@ -32,11 +37,15 @@ export function statusLabel(status: string): string {
 
 export const BASES = ["per_unit", "per_booking", "per_day"] as const;
 export type Basis = (typeof BASES)[number];
-export const BASIS_LABELS: Record<Basis, string> = {
+const BASIS_EN: Record<Basis, string> = {
   per_unit: "Per vehicle",
   per_booking: "Per booking",
   per_day: "Per day",
 };
+
+export const BASIS_LABELS = new Proxy(BASIS_EN, {
+  get: (o, k) => t(o[k as Basis] ?? String(k)),
+});
 
 const VIN = /^[A-HJ-NPR-Z0-9]{17}$/;
 const VIN_MESSAGE = "17 letters and digits, without I, O or Q";
@@ -137,7 +146,7 @@ export function formatMoney(minor: number, currency: string): string {
   return `${minor < 0 ? "-" : ""}${amount} ${currency}`;
 }
 
-type Money = { currency: string; minor: number };
+export type Money = { currency: string; minor: number };
 
 /** Sums lines per currency, in currency order. */
 export function totalsByCurrency(
@@ -160,6 +169,115 @@ export function formatTotals(totals: Money[]): string {
   return totals
     .map((total) => formatMoney(total.minor, total.currency))
     .join(", ");
+}
+
+/** "10" or "7.5" → 1000 or 750 basis points; null when it isn't a percentage (0 to 100). */
+export function parsePercent(value: string): number | null {
+  const cleaned = value.trim().replace(/%$/, "").trim();
+  if (cleaned === "") return 0;
+  if (!/^\d{1,3}(\.\d{1,2})?$/.test(cleaned)) return null;
+  const bps = Math.round(Number(cleaned) * 100);
+  return bps <= 10000 ? bps : null;
+}
+
+export function formatPercent(bps: number): string {
+  return `${Number((bps / 100).toFixed(2))}%`;
+}
+
+/** An exchange rate such as "2600" or "2650.5" (up to 4 decimals), > 0; "" when empty; null when invalid. */
+export function parseRate(value: string): string | null {
+  const cleaned = value.replace(/,/g, "").trim();
+  if (cleaned === "") return "";
+  if (!/^\d{1,9}(\.\d{1,4})?$/.test(cleaned) || Number(cleaned) <= 0)
+    return null;
+  return String(Number(cleaned));
+}
+
+export const CURRENCIES = ["USD", "SDG", "EUR", "AED", "SAR", "EGP", "GBP"];
+
+export type Extras = {
+  taxBps: number;
+  feeMinor: number;
+  feeCurrency: string;
+};
+
+export type Breakdown = {
+  currency: string;
+  subtotal: number;
+  tax: number;
+  fee: number;
+  total: number;
+};
+
+const roundHalfAway = (n: number) => Math.sign(n) * Math.round(Math.abs(n));
+
+/** Per currency: lines, then tax on the lines, then the fee. */
+export function invoiceBreakdown(
+  lines: { quantity: number; unitMinor: number; currency: string }[],
+  extras: Extras,
+): Breakdown[] {
+  const map = new Map<string, Breakdown>();
+  const row = (currency: string) => {
+    let r = map.get(currency);
+    if (!r)
+      map.set(
+        currency,
+        (r = { currency, subtotal: 0, tax: 0, fee: 0, total: 0 }),
+      );
+    return r;
+  };
+  for (const total of totalsByCurrency(lines)) {
+    const r = row(total.currency);
+    r.subtotal = total.minor;
+    r.tax = roundHalfAway((total.minor * extras.taxBps) / 10000);
+  }
+  if (extras.feeMinor !== 0 && extras.feeCurrency) {
+    row(extras.feeCurrency).fee = extras.feeMinor;
+  }
+  return [...map.values()]
+    .map((r) => ({ ...r, total: r.subtotal + r.tax + r.fee }))
+    .sort((a, b) => a.currency.localeCompare(b.currency));
+}
+
+/** Grand totals per currency of one invoice. */
+export function grandTotals(
+  lines: { quantity: number; unitMinor: number; currency: string }[],
+  extras: Extras,
+): Money[] {
+  return invoiceBreakdown(lines, extras).map((r) => ({
+    currency: r.currency,
+    minor: r.total,
+  }));
+}
+
+export function mergeTotals(groups: Money[][]): Money[] {
+  const sums = new Map<string, number>();
+  for (const group of groups)
+    for (const m of group)
+      sums.set(m.currency, (sums.get(m.currency) ?? 0) + m.minor);
+  return [...sums]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([currency, minor]) => ({ currency, minor }));
+}
+
+/**
+ * With the typed rate (SDG for 1 USD), the whole invoice in USD and in SDG.
+ * Only USD and SDG amounts convert; null when there is no rate or another currency is present.
+ */
+export function equivalents(
+  totals: Money[],
+  rate: string,
+): { usd: number; sdg: number } | null {
+  const r = Number(rate);
+  if (!rate || !(r > 0)) return null;
+  if (totals.some((m) => m.currency !== "USD" && m.currency !== "SDG"))
+    return null;
+  const usd = totals.find((m) => m.currency === "USD")?.minor ?? 0;
+  const sdg = totals.find((m) => m.currency === "SDG")?.minor ?? 0;
+  return {
+    usd: Math.round(usd + sdg / r),
+    sdg: Math.round(sdg + usd * r),
+  };
 }
 
 type Rule = {

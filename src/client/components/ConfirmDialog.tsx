@@ -9,6 +9,7 @@ import {
   AlertDialogTitle,
 } from "@/client/components/ui/alert-dialog";
 import { Button } from "@/client/components/ui/button";
+import { t } from "@/lib/i18n";
 
 /**
  * Asks before an action that cannot be undone. Render it only while it is
@@ -43,19 +44,21 @@ export function ConfirmDialog({
     >
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogTitle>{t(title)}</AlertDialogTitle>
           {children ? (
             <AlertDialogDescription>{children}</AlertDialogDescription>
           ) : null}
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={pending}>
+            {t("Cancel")}
+          </AlertDialogCancel>
           <Button
             variant={destructive ? "destructive" : "default"}
             pending={pending}
             onClick={onConfirm}
           >
-            {confirmLabel}
+            {t(confirmLabel)}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

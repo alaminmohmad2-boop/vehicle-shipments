@@ -98,7 +98,7 @@ function EmptyRows({ icon: Icon }: { icon: LucideIcon }) {
         >
           <Icon className="size-4 shrink-0 text-muted-foreground/60" />
           <span className={`h-2 rounded-full bg-foreground/10 ${row.name}`} />
-          <span className="ml-auto flex gap-2">
+          <span className="ms-auto flex gap-2">
             {row.meta.map((width) => (
               <span
                 key={width}

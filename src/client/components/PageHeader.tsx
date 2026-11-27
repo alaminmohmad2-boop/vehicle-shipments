@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 import { Link } from "@tanstack/react-router";
 import type { ComponentProps, ReactNode } from "react";
 import { ChevronLeft } from "lucide-react";
@@ -22,7 +23,9 @@ export function PageHeader({
   const header = (
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div className="min-w-0 flex-auto space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+          {typeof title === "string" ? t(title) : title}
+        </h1>
         {description ? (
           <div className="text-sm text-muted-foreground">{description}</div>
         ) : null}
@@ -58,7 +61,7 @@ export function BackButton({
       {...props}
       className={cn(BACK_LINK_CLASS, "cursor-pointer", className)}
     >
-      <ChevronLeft className="size-4" aria-hidden />
+      <ChevronLeft className="size-4 rtl:rotate-180" aria-hidden />
       {children}
     </button>
   );
@@ -76,7 +79,7 @@ export function BackLink({
 }) {
   return (
     <Link to={to} params={params} className={BACK_LINK_CLASS}>
-      <ChevronLeft className="size-4" aria-hidden />
+      <ChevronLeft className="size-4 rtl:rotate-180" aria-hidden />
       {children}
     </Link>
   );

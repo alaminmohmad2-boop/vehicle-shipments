@@ -31,6 +31,7 @@ import {
 import { formatDate } from "@/client/lib/format";
 import { STATUSES, STATUS_LABELS } from "@/lib/shipping";
 import { searchBookings } from "@/serverFunctions/bookings";
+import { t } from "@/lib/i18n";
 
 const SORTS = [
   "number",
@@ -122,7 +123,7 @@ function Bookings() {
     const active = current.sort === column;
     return (
       <TableHead
-        className={align === "right" ? "text-right" : undefined}
+        className={align === "right" ? "text-end" : undefined}
         aria-sort={
           active ? (current.dir === "asc" ? "ascending" : "descending") : "none"
         }
@@ -130,10 +131,10 @@ function Bookings() {
         <button
           type="button"
           onClick={() => sortBy(column)}
-          aria-label={`Sort by ${label}`}
+          aria-label={t(`Sort by ${label}`)}
           className="inline-flex items-center gap-1 font-medium transition-colors hover:text-foreground"
         >
-          {label}
+          {t(label)}
           {active ? (
             current.dir === "asc" ? (
               <ArrowUp className="size-3" />
@@ -149,11 +150,11 @@ function Bookings() {
   return (
     <AppShell wide>
       <PageHeader
-        title="Bookings"
+        title={t("Bookings")}
         actions={
           <Link to="/bookings/new" className={buttonVariants()}>
             <Plus data-icon="inline-start" />
-            New booking
+            {t("New booking")}
           </Link>
         }
       />
@@ -162,22 +163,22 @@ function Bookings() {
         onSubmit={submit}
         className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6 lg:items-end"
       >
-        <Field label="Search" className="sm:col-span-2">
+        <Field label={t("Search")} className="sm:col-span-2">
           <Input
             type="search"
             value={form.q}
             onChange={(event) => setForm({ ...form, q: event.target.value })}
-            placeholder="Booking, VIN, customer, vessel or port"
+            placeholder={t("Booking, VIN, customer, vessel or port")}
           />
         </Field>
-        <Field label="Status">
+        <Field label={t("Status")}>
           <NativeSelect
             value={form.status}
             onChange={(event) =>
               setForm({ ...form, status: event.target.value })
             }
           >
-            <NativeSelectOption value="">Any</NativeSelectOption>
+            <NativeSelectOption value="">{t("Any")}</NativeSelectOption>
             {STATUSES.map((status) => (
               <NativeSelectOption key={status} value={status}>
                 {STATUS_LABELS[status]}
@@ -185,14 +186,14 @@ function Bookings() {
             ))}
           </NativeSelect>
         </Field>
-        <Field label="Carrier">
+        <Field label={t("Carrier")}>
           <NativeSelect
             value={form.carrier}
             onChange={(event) =>
               setForm({ ...form, carrier: event.target.value })
             }
           >
-            <NativeSelectOption value="">Any</NativeSelectOption>
+            <NativeSelectOption value="">{t("Any")}</NativeSelectOption>
             {result.carriers.map((carrier) => (
               <NativeSelectOption key={carrier} value={carrier}>
                 {carrier}
@@ -200,14 +201,14 @@ function Bookings() {
             ))}
           </NativeSelect>
         </Field>
-        <Field label="Departs from">
+        <Field label={t("Departs from")}>
           <Input
             type="date"
             value={form.from}
             onChange={(event) => setForm({ ...form, from: event.target.value })}
           />
         </Field>
-        <Field label="Departs by">
+        <Field label={t("Departs by")}>
           <Input
             type="date"
             value={form.to}
@@ -216,7 +217,7 @@ function Bookings() {
         </Field>
         <div className="flex gap-2 lg:col-span-6">
           <Button type="submit" variant="secondary">
-            Search
+            {t("Search")}
           </Button>
           {filtered ? (
             <Button
@@ -227,7 +228,7 @@ function Bookings() {
                 void navigate({ search: {} });
               }}
             >
-              Clear
+              {t("Clear")}
             </Button>
           ) : null}
         </div>
@@ -235,17 +236,19 @@ function Bookings() {
 
       {result.total === 0 ? (
         filtered ? (
-          <EmptyState kind="filtered" title="No bookings match" />
+          <EmptyState kind="filtered" title={t("No bookings match")} />
         ) : (
           <EmptyState
-            title="No bookings yet"
-            description="Create one to start adding vehicles and route legs."
+            title={t("No bookings yet")}
+            description={t(
+              "Create one to start adding vehicles and route legs.",
+            )}
             action={
               <Link
                 to="/bookings/new"
                 className={buttonVariants({ variant: "outline" })}
               >
-                New booking
+                {t("New booking")}
               </Link>
             }
           />
@@ -258,8 +261,8 @@ function Bookings() {
                 <TableRow>
                   {header("number", "Booking")}
                   {header("customer", "Customer")}
-                  <TableHead>Route</TableHead>
-                  <TableHead>Vessel</TableHead>
+                  <TableHead>{t("Route")}</TableHead>
+                  <TableHead>{t("Vessel")}</TableHead>
                   {header("departs", "Departs")}
                   {header("units", "Units", "right")}
                   {header("status", "Status")}
@@ -285,7 +288,7 @@ function Bookings() {
                       {[row.vessel, row.voyage].filter(Boolean).join(" ")}
                     </TableCell>
                     <TableCell>{formatDate(row.departs)}</TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    <TableCell className="text-end tabular-nums">
                       {row.units}
                     </TableCell>
                     <TableCell>
@@ -298,26 +301,26 @@ function Bookings() {
           </TableCard>
           <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
             <span data-testid="result-count">
-              {result.total} {result.total === 1 ? "booking" : "bookings"}
+              {result.total} {t(result.total === 1 ? "booking" : "bookings")}
             </span>
             {pages > 1 ? (
               <div className="flex items-center gap-2">
                 <span>
-                  Page {result.page} of {pages}
+                  {t("Page")} {result.page} {t("of")} {pages}
                 </span>
                 <PageLink
                   page={result.page - 1}
                   disabled={result.page <= 1}
-                  label="Previous page"
+                  label={t("Previous page")}
                 >
-                  <ChevronLeft />
+                  <ChevronLeft className="rtl:rotate-180" />
                 </PageLink>
                 <PageLink
                   page={result.page + 1}
                   disabled={result.page >= pages}
-                  label="Next page"
+                  label={t("Next page")}
                 >
-                  <ChevronRight />
+                  <ChevronRight className="rtl:rotate-180" />
                 </PageLink>
               </div>
             ) : null}
@@ -350,7 +353,7 @@ function PageLink({
     <Link
       to="/"
       search={(prev: Search) => ({ ...prev, page })}
-      aria-label={label}
+      aria-label={t(label)}
       className={buttonVariants({ variant: "outline", size: "icon" })}
     >
       {children}
