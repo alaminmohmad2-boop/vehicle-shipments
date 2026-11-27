@@ -1,9 +1,10 @@
+import { dateLocale, t } from "@/lib/i18n";
 /** "2026-12-02" → "2 Dec 2026"; empty for no date. */
 export function formatDate(value: string | null | undefined): string {
   if (!value) return "";
   const date = new Date(`${value.slice(0, 10)}T00:00:00Z`);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString("en-GB", {
+  return date.toLocaleDateString(dateLocale(), {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -35,11 +36,12 @@ export function errorMessage(error: unknown): string {
   if (error instanceof Error && error.message) {
     try {
       const parsed = JSON.parse(error.message);
-      if (Array.isArray(parsed) && parsed[0]?.message) return parsed[0].message;
+      if (Array.isArray(parsed) && parsed[0]?.message)
+        return t(parsed[0].message);
     } catch {
       // Not JSON: the message as thrown.
     }
-    return error.message;
+    return t(error.message);
   }
-  return "That didn't work. Try again.";
+  return t("That didn't work. Try again.");
 }

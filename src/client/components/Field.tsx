@@ -1,6 +1,7 @@
 import { useId, type ReactElement, type ReactNode } from "react";
 import { cloneElement } from "react";
 import { Label } from "@/client/components/ui/label";
+import { t } from "@/lib/i18n";
 
 /** A label, its control and the control's inline error. */
 export function Field({
@@ -18,7 +19,7 @@ export function Field({
   const errorId = `${id}-error`;
   return (
     <div className={`space-y-1.5 ${className ?? ""}`}>
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={id}>{typeof label === "string" ? t(label) : label}</Label>
       {cloneElement(children, {
         id,
         "aria-invalid": error ? true : undefined,
@@ -26,7 +27,7 @@ export function Field({
       })}
       {error ? (
         <p id={errorId} className="text-sm text-destructive">
-          {error}
+          {t(error)}
         </p>
       ) : null}
     </div>

@@ -15,6 +15,7 @@ import {
 import { errorMessage } from "@/client/lib/format";
 import { createBookingInput, fieldErrors } from "@/lib/shipping";
 import { createBooking } from "@/serverFunctions/bookings";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/bookings/new")({
   head: () => ({ meta: [{ title: "New booking · Vehicle Shipments" }] }),
@@ -51,8 +52,8 @@ function NewBooking() {
   return (
     <AppShell>
       <PageHeader
-        title="New booking"
-        backLink={<BackLink to="/">Bookings</BackLink>}
+        title={t("New booking")}
+        backLink={<BackLink to="/">{t("Bookings")}</BackLink>}
       />
       <form onSubmit={submit} noValidate className="space-y-8">
         <BookingFieldset
@@ -61,7 +62,7 @@ function NewBooking() {
           onChange={setBooking}
         />
         <section className="space-y-4">
-          <h2 className="text-base font-semibold">Route</h2>
+          <h2 className="text-base font-semibold">{t("Route")}</h2>
           {legs.map((leg, index) => (
             <div
               key={index}
@@ -69,7 +70,9 @@ function NewBooking() {
               className="space-y-3 rounded-xl border border-border bg-card p-4"
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium">Leg {index + 1}</h3>
+                <h3 className="text-sm font-medium">
+                  {t("Leg")} {index + 1}
+                </h3>
                 {legs.length > 1 ? (
                   <Button
                     type="button"
@@ -108,7 +111,7 @@ function NewBooking() {
             }}
           >
             <Plus data-icon="inline-start" />
-            Add leg
+            {t("Add leg")}
           </Button>
         </section>
         {failure ? (
@@ -117,7 +120,7 @@ function NewBooking() {
           </Alert>
         ) : null}
         <Button type="submit" pending={pending}>
-          Create booking
+          {t("Create booking")}
         </Button>
       </form>
     </AppShell>

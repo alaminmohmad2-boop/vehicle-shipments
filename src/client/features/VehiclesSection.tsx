@@ -34,6 +34,8 @@ import {
 import { removeVehicle, saveVehicle } from "@/serverFunctions/bookings";
 import { Section } from "./Section";
 import type { BookingData } from "./types";
+import { lookupVin } from "@/serverFunctions/bookings";
+import { t } from "@/lib/i18n";
 
 type Vehicle = BookingData["vehicles"][number];
 
@@ -65,7 +67,7 @@ export function VehiclesSection({
           onClick={() => setEditing("new")}
         >
           <Plus data-icon="inline-start" />
-          Add vehicle
+          {t("Add vehicle")}
         </Button>
       }
     >
@@ -74,29 +76,29 @@ export function VehiclesSection({
           <Lock />
           <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
             <span>
-              {statusLabel(data.booking.status)} bookings keep their vehicles as
-              they are.
+              {statusLabel(data.booking.status)}{" "}
+              {t("bookings keep their vehicles as they are.")}
             </span>
             <Button size="sm" variant="outline" onClick={onReopen}>
-              Reopen
+              {t("Reopen")}
             </Button>
           </AlertDescription>
         </Alert>
       ) : null}
       {data.vehicles.length === 0 ? (
-        <EmptyState title="No vehicles yet" size="sm" />
+        <EmptyState title={t("No vehicles yet")} size="sm" />
       ) : (
         <TableCard>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>VIN</TableHead>
-                <TableHead>Vehicle</TableHead>
-                <TableHead>L × W × H (cm)</TableHead>
-                <TableHead className="text-right">Weight (kg)</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">
-                  <span className="sr-only">Actions</span>
+                <TableHead>{t("VIN")}</TableHead>
+                <TableHead>{t("Vehicle")}</TableHead>
+                <TableHead>{t("L × W × H (cm)")}</TableHead>
+                <TableHead className="text-end">{t("Weight (kg)")}</TableHead>
+                <TableHead>{t("Status")}</TableHead>
+                <TableHead className="text-end">
+                  <span className="sr-only">{t("Actions")}</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -114,7 +116,7 @@ export function VehiclesSection({
                   <TableCell className="tabular-nums">
                     {dims(vehicle)}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">
+                  <TableCell className="text-end tabular-nums">
                     {vehicle.weightKg?.toLocaleString("en-US") ?? ""}
                   </TableCell>
                   <TableCell>
@@ -132,7 +134,7 @@ export function VehiclesSection({
                         disabled={locked}
                         onClick={() => setEditing(vehicle)}
                       >
-                        Edit
+                        {t("Edit")}
                       </Button>
                       <Button
                         variant="ghost"
@@ -140,7 +142,7 @@ export function VehiclesSection({
                         disabled={locked}
                         onClick={() => setRemoving(vehicle)}
                       >
-                        Remove
+                        {t("Remove")}
                       </Button>
                     </div>
                   </TableCell>
@@ -160,7 +162,7 @@ export function VehiclesSection({
       {removing ? (
         <ConfirmDialog
           title={`Remove ${removing.vin}?`}
-          confirmLabel="Remove vehicle"
+          confirmLabel={t("Remove vehicle")}
           destructive
           pending={pending}
           onClose={() => setRemoving(null)}
@@ -207,10 +209,39 @@ function VehicleDialog({
       setValues({ ...values, [key]: event.target.value }),
   });
   const number = { inputMode: "numeric" as const };
+  const [decoding, setDecoding] = useState(false);
+  const [decodeNote, setDecodeNote] = useState("");
+  async function decode() {
+    setDecoding(true);
+    setDecodeNote("");
+    try {
+      const result = await lookupVin({ data: { vin: values.vin } });
+      if (result.found) {
+        setValues({
+          ...values,
+          vin: values.vin.trim().toUpperCase(),
+          make: result.make || values.make,
+          model: result.model || values.model,
+          year: result.year || values.year,
+        });
+        setDecodeNote(t("Filled from the free NHTSA VIN database. Check it."));
+      } else if (result.reason === "invalid") {
+        setDecodeNote(t("Enter all 17 characters of the VIN first."));
+      } else if (result.reason === "unknown") {
+        setDecodeNote(
+          t("This VIN is not in the database. Fill the details by hand."),
+        );
+      } else {
+        setDecodeNote(t("The VIN service could not be reached. Try again."));
+      }
+    } finally {
+      setDecoding(false);
+    }
+  }
   return (
     <FormDialog
       title={vehicle ? "Edit vehicle" : "Add vehicle"}
-      submitLabel="Save vehicle"
+      submitLabel={t("Save vehicle")}
       pending={pending}
       wide
       onClose={onClose}
@@ -231,7 +262,7 @@ function VehicleDialog({
       }}
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="VIN" error={errors.vin} className="sm:col-span-2">
+        <Field label={t("VIN")} error={errors.vin} className="sm:col-span-2">
           <Input
             {...bind("vin")}
             className="font-mono uppercase"
@@ -239,35 +270,50 @@ function VehicleDialog({
             autoComplete="off"
           />
         </Field>
-        <Field label="Make" error={errors.make}>
+        <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
+          <Button
+            type="button"
+            variant="outline"
+            pending={decoding}
+            onClick={decode}
+          >
+            {t("Fill from VIN")}
+          </Button>
+          {decodeNote ? (
+            <span className="text-xs text-muted-foreground">{decodeNote}</span>
+          ) : null}
+        </div>
+        <Field label={t("Make")} error={errors.make}>
           <Input {...bind("make")} />
         </Field>
-        <Field label="Model" error={errors.model}>
+        <Field label={t("Model")} error={errors.model}>
           <Input {...bind("model")} />
         </Field>
-        <Field label="Year" error={errors.year}>
+        <Field label={t("Year")} error={errors.year}>
           <Input {...bind("year")} {...number} />
         </Field>
-        <Field label="Weight (kg)" error={errors.weightKg}>
+        <Field label={t("Weight (kg)")} error={errors.weightKg}>
           <Input {...bind("weightKg")} {...number} />
         </Field>
-        <Field label="Length (cm)" error={errors.lengthCm}>
+        <Field label={t("Length (cm)")} error={errors.lengthCm}>
           <Input {...bind("lengthCm")} {...number} />
         </Field>
-        <Field label="Width (cm)" error={errors.widthCm}>
+        <Field label={t("Width (cm)")} error={errors.widthCm}>
           <Input {...bind("widthCm")} {...number} />
         </Field>
-        <Field label="Height (cm)" error={errors.heightCm}>
+        <Field label={t("Height (cm)")} error={errors.heightCm}>
           <Input {...bind("heightCm")} {...number} />
         </Field>
-        <Field label="Vehicle status" error={errors.status}>
+        <Field label={t("Vehicle status")} error={errors.status}>
           <NativeSelect
             value={values.status}
             onChange={(event) =>
               setValues({ ...values, status: event.target.value })
             }
           >
-            <NativeSelectOption value="">Same as booking</NativeSelectOption>
+            <NativeSelectOption value="">
+              {t("Same as booking")}
+            </NativeSelectOption>
             {STATUSES.map((status) => (
               <NativeSelectOption key={status} value={status}>
                 {STATUS_LABELS[status]}

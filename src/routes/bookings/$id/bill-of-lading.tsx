@@ -14,27 +14,36 @@ import {
   TableRow,
 } from "@/client/components/ui/table";
 import { formatDate } from "@/client/lib/format";
+import { getCompany } from "@/serverFunctions/settings";
+import { Letterhead } from "@/client/components/Letterhead";
+import { PdfButton } from "@/client/components/PdfButton";
 import { getBooking } from "@/serverFunctions/bookings";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/bookings/$id/bill-of-lading")({
-  loader: ({ params }) => getBooking({ data: { id: params.id } }),
+  loader: async ({ params }) => ({
+    data: await getBooking({ data: { id: params.id } }),
+    company: (await getCompany()).company,
+  }),
   head: ({ loaderData }) => ({
-    meta: [{ title: `Bill of lading ${loaderData?.booking.number ?? ""}` }],
+    meta: [
+      { title: `Bill of lading ${loaderData?.data?.booking.number ?? ""}` },
+    ],
   }),
   component: BillOfLading,
 });
 
 function BillOfLading() {
-  const data = Route.useLoaderData();
+  const { data, company } = Route.useLoaderData();
   const { id } = Route.useParams();
   if (!data) {
     return (
       <AppShell>
         <PageHeader
-          title="Bill of lading"
-          backLink={<BackLink to="/">Bookings</BackLink>}
+          title={t("Bill of lading")}
+          backLink={<BackLink to="/">{t("Bookings")}</BackLink>}
         />
-        <EmptyState kind="error" title="Booking not found" />
+        <EmptyState kind="error" title={t("Booking not found")} />
       </AppShell>
     );
   }
@@ -51,11 +60,24 @@ function BillOfLading() {
             </BackLink>
           </span>
         }
-        actions={<PrintButton />}
+        actions={
+          <div className="flex gap-2">
+            <PdfButton
+              targetId="bill-of-lading"
+              fileName={`BL-${booking.number}`}
+            />
+            <PrintButton />
+          </div>
+        }
       />
-      <div data-testid="bill-of-lading" className="space-y-6 text-sm">
+      <div
+        id="bill-of-lading"
+        data-testid="bill-of-lading"
+        className="space-y-6 bg-background text-sm"
+      >
+        <Letterhead company={company} />
         <dl className="grid gap-4 rounded-xl border border-border p-4 sm:grid-cols-2">
-          <Item label="Shipper">
+          <Item label={t("Shipper")}>
             {booking.customerName}
             {booking.customerEmail ? (
               <div className="text-muted-foreground">
@@ -63,23 +85,25 @@ function BillOfLading() {
               </div>
             ) : null}
           </Item>
-          <Item label="Consignee">{booking.consignee || "—"}</Item>
-          <Item label="Carrier">{booking.carrier || "—"}</Item>
-          <Item label="Vessel / voyage">
+          <Item label={t("Consignee")}>{booking.consignee || "—"}</Item>
+          <Item label={t("Carrier")}>{booking.carrier || "—"}</Item>
+          <Item label={t("Vessel / voyage")}>
             {[booking.vessel, booking.voyage].filter(Boolean).join(" ") || "—"}
           </Item>
-          <Item label="Port of loading">{legs[0]?.fromPort ?? "—"}</Item>
-          <Item label="Port of discharge">{legs.at(-1)?.toPort ?? "—"}</Item>
+          <Item label={t("Port of loading")}>{legs[0]?.fromPort ?? "—"}</Item>
+          <Item label={t("Port of discharge")}>
+            {legs.at(-1)?.toPort ?? "—"}
+          </Item>
         </dl>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Leg</TableHead>
-              <TableHead>From</TableHead>
-              <TableHead>To</TableHead>
-              <TableHead>Vessel / voyage</TableHead>
-              <TableHead>ETD</TableHead>
-              <TableHead>ETA</TableHead>
+              <TableHead>{t("Leg")}</TableHead>
+              <TableHead>{t("From")}</TableHead>
+              <TableHead>{t("To")}</TableHead>
+              <TableHead>{t("Vessel / voyage")}</TableHead>
+              <TableHead>{t("ETD")}</TableHead>
+              <TableHead>{t("ETA")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -98,11 +122,11 @@ function BillOfLading() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>VIN</TableHead>
-              <TableHead>Make / model</TableHead>
-              <TableHead>Year</TableHead>
-              <TableHead>L × W × H (cm)</TableHead>
-              <TableHead className="text-right">Weight (kg)</TableHead>
+              <TableHead>{t("VIN")}</TableHead>
+              <TableHead>{t("Make / model")}</TableHead>
+              <TableHead>{t("Year")}</TableHead>
+              <TableHead>{t("L × W × H (cm)")}</TableHead>
+              <TableHead className="text-end">{t("Weight (kg)")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -114,7 +138,7 @@ function BillOfLading() {
                 </TableCell>
                 <TableCell>{v.year ?? ""}</TableCell>
                 <TableCell className="tabular-nums">{`${v.lengthCm ?? "?"} × ${v.widthCm ?? "?"} × ${v.heightCm ?? "?"}`}</TableCell>
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="text-end tabular-nums">
                   {v.weightKg?.toLocaleString("en-US") ?? ""}
                 </TableCell>
               </TableRow>
@@ -123,16 +147,16 @@ function BillOfLading() {
           <TableFooter>
             <TableRow>
               <TableCell colSpan={4}>
-                {vehicles.length} {vehicles.length === 1 ? "unit" : "units"}
+                {vehicles.length} {t(vehicles.length === 1 ? "unit" : "units")}
               </TableCell>
-              <TableCell className="text-right tabular-nums">
+              <TableCell className="text-end tabular-nums">
                 {weight.toLocaleString("en-US")}
               </TableCell>
             </TableRow>
           </TableFooter>
         </Table>
         {booking.cargoNotes ? (
-          <Item label="Cargo notes">{booking.cargoNotes}</Item>
+          <Item label={t("Cargo notes")}>{booking.cargoNotes}</Item>
         ) : null}
       </div>
     </AppShell>

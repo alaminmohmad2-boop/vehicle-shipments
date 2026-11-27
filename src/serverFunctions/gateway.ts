@@ -1,5 +1,7 @@
 import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeader } from "@tanstack/react-start/server";
+import { langFromCookie } from "@/lib/i18n";
 import { ConfigurationError, gatewayUrl } from "@every-app/sdk/server";
 
 /**
@@ -8,10 +10,11 @@ import { ConfigurationError, gatewayUrl } from "@every-app/sdk/server";
  * renders under the same root, and the Gateway's address is no secret.
  */
 export const getGatewayUrl = createServerFn().handler(() => {
+  const lang = langFromCookie(getRequestHeader("cookie"));
   try {
-    return { gatewayUrl: new URL(gatewayUrl(env)).origin };
+    return { gatewayUrl: new URL(gatewayUrl(env)).origin, lang };
   } catch (error) {
     if (!(error instanceof ConfigurationError)) throw error;
-    return { gatewayUrl: null };
+    return { gatewayUrl: null, lang };
   }
 });

@@ -19,6 +19,7 @@ import { moveLeg, removeLeg, saveLeg } from "@/serverFunctions/bookings";
 import { emptyLeg, LegFieldset, type LegValues } from "./BookingFields";
 import { Section } from "./Section";
 import type { BookingData } from "./types";
+import { t } from "@/lib/i18n";
 
 type Leg = BookingData["legs"][number];
 
@@ -30,11 +31,11 @@ export function LegsSection({ data }: { data: BookingData }) {
   const last = data.legs.at(-1);
   return (
     <Section
-      title="Route"
+      title={t("Route")}
       actions={
         <Button variant="outline" size="sm" onClick={() => setEditing("new")}>
           <Plus data-icon="inline-start" />
-          Add leg
+          {t("Add leg")}
         </Button>
       }
     >
@@ -43,13 +44,13 @@ export function LegsSection({ data }: { data: BookingData }) {
           <TableHeader>
             <TableRow>
               <TableHead>#</TableHead>
-              <TableHead>From</TableHead>
-              <TableHead>To</TableHead>
-              <TableHead>Vessel / voyage</TableHead>
-              <TableHead>ETD</TableHead>
-              <TableHead>ETA</TableHead>
-              <TableHead className="text-right">
-                <span className="sr-only">Actions</span>
+              <TableHead>{t("From")}</TableHead>
+              <TableHead>{t("To")}</TableHead>
+              <TableHead>{t("Vessel / voyage")}</TableHead>
+              <TableHead>{t("ETD")}</TableHead>
+              <TableHead>{t("ETA")}</TableHead>
+              <TableHead className="text-end">
+                <span className="sr-only">{t("Actions")}</span>
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -69,7 +70,7 @@ export function LegsSection({ data }: { data: BookingData }) {
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      aria-label="Move up"
+                      aria-label={t("Move up")}
                       disabled={index === 0 || pending}
                       onClick={() =>
                         run(() =>
@@ -84,7 +85,7 @@ export function LegsSection({ data }: { data: BookingData }) {
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      aria-label="Move down"
+                      aria-label={t("Move down")}
                       disabled={index === data.legs.length - 1 || pending}
                       onClick={() =>
                         run(() =>
@@ -101,7 +102,7 @@ export function LegsSection({ data }: { data: BookingData }) {
                       size="sm"
                       onClick={() => setEditing(leg)}
                     >
-                      Edit
+                      {t("Edit")}
                     </Button>
                     <Button
                       variant="ghost"
@@ -109,7 +110,7 @@ export function LegsSection({ data }: { data: BookingData }) {
                       disabled={data.legs.length <= 1}
                       onClick={() => setRemoving(leg)}
                     >
-                      Remove
+                      {t("Remove")}
                     </Button>
                   </div>
                 </TableCell>
@@ -143,7 +144,7 @@ export function LegsSection({ data }: { data: BookingData }) {
       {removing ? (
         <ConfirmDialog
           title={`Remove the leg ${removing.fromPort} → ${removing.toPort}?`}
-          confirmLabel="Remove leg"
+          confirmLabel={t("Remove leg")}
           destructive
           pending={pending}
           onClose={() => setRemoving(null)}
@@ -176,7 +177,7 @@ function LegDialog({
   return (
     <FormDialog
       title={leg ? "Edit leg" : "Add leg"}
-      submitLabel="Save leg"
+      submitLabel={t("Save leg")}
       pending={pending}
       onClose={onClose}
       onSubmit={async () => {

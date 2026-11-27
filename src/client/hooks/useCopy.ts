@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { t } from "@/lib/i18n";
 
 /**
  * Copies text to the clipboard with a toast. `copied` stays true for two
@@ -13,10 +14,10 @@ export function useCopy() {
     try {
       await navigator.clipboard.writeText(value);
     } catch {
-      toast.error("Could not copy.");
+      toast.error(t("Could not copy."));
       return false;
     }
-    toast.success(successMessage);
+    toast.success(t(successMessage));
     setCopied(true);
     // A second copy restarts the two seconds.
     clearTimeout(resetTimer.current);

@@ -13,10 +13,15 @@ import {
 import {
   amountInput,
   BASES,
+  grandTotals,
+  invoiceBreakdown,
+  mergeTotals,
+  parsePercent,
+  parseAmount,
+  parseRate,
   currencyInput,
   tariffMatches,
   tariffQuantity,
-  totalsByCurrency,
 } from "@/lib/shipping";
 import {
   bookingScope,
@@ -183,6 +188,36 @@ export const issueInvoiceInput = z.object({
   bookingId: id,
   issueDate: isoDate,
   dueDate: isoDate.or(z.literal("")).default(""),
+  /** Percent such as "10" or "7.5"; empty means no tax. */
+  taxPercent: z
+    .string()
+    .default("0")
+    .refine((v) => parsePercent(v) !== null, "Enter a percentage from 0 to 100")
+    .transform((v) => parsePercent(v)!),
+  /** One fee for the whole invoice; empty means none. */
+  fee: z
+    .string()
+    .default("")
+    .refine(
+      (v) =>
+        v.trim() === "" || (parseAmount(v) !== null && parseAmount(v)! >= 0),
+      "Enter an amount such as 25 or 12.50",
+    )
+    .transform((v) => (v.trim() === "" ? 0 : parseAmount(v)!)),
+  feeCurrency: z
+    .string()
+    .trim()
+    .transform((v) => v.toUpperCase())
+    .refine(
+      (v) => v === "" || /^[A-Z]{3}$/.test(v),
+      "Use a 3-letter code such as USD",
+    ),
+  /** Sudanese pounds for 1 US dollar, typed by the user. */
+  exchangeRate: z
+    .string()
+    .default("")
+    .refine((v) => parseRate(v) !== null, "Enter a rate such as 2600")
+    .transform((v) => parseRate(v)!),
 });
 
 /** Turns every uninvoiced line into one invoice; its lines never change afterwards. */
@@ -197,6 +232,8 @@ export async function issueInvoice(
     .where(and(eq(charges.bookingId, booking.id), isNull(charges.invoiceId)))
     .orderBy(asc(charges.createdAt), asc(sql`rowid`));
   if (!open.length) throw new Error("Add a charge first");
+  if (input.fee > 0 && !input.feeCurrency)
+    throw new Error("Enter the currency of the fee");
   const invoiceId = crypto.randomUUID();
   const number = formatNumber("INV", await nextNumber(user.orgId, "invoice"));
   await db.batch([
@@ -209,6 +246,10 @@ export async function issueInvoice(
       status: "issued",
       issueDate: input.issueDate,
       dueDate: input.dueDate || null,
+      taxBps: input.taxPercent,
+      feeMinor: input.fee,
+      feeCurrency: input.fee > 0 ? input.feeCurrency : "",
+      exchangeRate: input.exchangeRate,
     }),
     db.insert(invoiceLines).values(
       open.map((line, position) => ({
@@ -295,6 +336,10 @@ export async function voidInvoice(user: Viewer, invoiceId: string) {
       status: "issued",
       creditsInvoiceId: invoiceId,
       issueDate: new Date().toISOString().slice(0, 10),
+      taxBps: invoice.taxBps,
+      feeMinor: -invoice.feeMinor,
+      feeCurrency: invoice.feeCurrency,
+      exchangeRate: invoice.exchangeRate,
     }),
     db.insert(invoiceLines).values(
       lines.map((line) => ({
@@ -355,13 +400,13 @@ export async function getBilling(user: Viewer, bookingId: string) {
       credits: doc.creditsInvoiceId
         ? (numberOf.get(doc.creditsInvoiceId) ?? null)
         : null,
-      totals: totalsByCurrency(linesOf(doc.id)),
+      totals: grandTotals(linesOf(doc.id), doc),
     })),
-    invoiced: totalsByCurrency(docLines),
-    open: totalsByCurrency(
+    invoiced: mergeTotals(docs.map((doc) => grandTotals(linesOf(doc.id), doc))),
+    open: mergeTotals(
       docs
         .filter((doc) => doc.kind === "invoice" && doc.status === "issued")
-        .flatMap((doc) => linesOf(doc.id)),
+        .map((doc) => grandTotals(linesOf(doc.id), doc)),
     ),
   };
 }
@@ -402,6 +447,7 @@ export async function getInvoiceDocument(user: Viewer, invoiceId: string) {
       destination: route.at(-1)?.toPort ?? "",
     },
     lines,
-    totals: totalsByCurrency(lines),
+    totals: grandTotals(lines, invoice),
+    breakdown: invoiceBreakdown(lines, invoice),
   };
 }

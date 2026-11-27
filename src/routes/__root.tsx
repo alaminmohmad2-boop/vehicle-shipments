@@ -1,11 +1,13 @@
 import { createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import {
   themePreferenceInitScript,
   useThemePreference,
 } from "@/client/lib/theme";
 import appCss from "@/client/styles/app.css?url";
+import { langFromCookie, setLang, type Lang } from "@/lib/i18n";
+import { useRouterState } from "@tanstack/react-router";
 import { getGatewayUrl } from "@/serverFunctions/gateway";
 
 export const Route = createRootRoute({
@@ -34,8 +36,29 @@ function ThemedToaster() {
 }
 
 function RootDocument({ children }: { children: ReactNode }) {
+  const serverLang: Lang = useRouterState({
+    select: (state) => {
+      const root = state.matches[0]?.loaderData;
+      return root && "lang" in root && root.lang === "ar" ? "ar" : "en";
+    },
+  });
+  // The cookie may not reach the server (some proxies drop it), so the
+  // browser re-reads it after load and re-renders if it differs.
+  const [lang, setLangState] = useState<Lang>(serverLang);
+  useEffect(() => {
+    const fromBrowser = langFromCookie(document.cookie);
+    if (fromBrowser !== lang) setLangState(fromBrowser);
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+  }, [lang]);
+  // Set before the page below renders, on the server and in the browser.
+  setLang(lang);
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang={lang}
+      dir={lang === "ar" ? "rtl" : "ltr"}
+      suppressHydrationWarning
+    >
       <head>
         {/* Sets the theme before the first paint: dark never flashes light. */}
         <script
@@ -44,7 +67,7 @@ function RootDocument({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        {children}
+        <Fragment key={lang}>{children}</Fragment>
         <ThemedToaster />
         <Scripts />
       </body>

@@ -38,6 +38,8 @@ import {
   getTariffs,
   saveTariff,
 } from "@/serverFunctions/billing";
+import { CurrencyList } from "@/client/components/CurrencyList";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/tariffs")({
   loader: () => getTariffs(),
@@ -55,7 +57,7 @@ function Tariffs() {
   return (
     <AppShell wide>
       <PageHeader
-        title="Tariffs"
+        title={t("Tariffs")}
         description={
           canEdit ? undefined : "Only owners and admins can change these."
         }
@@ -63,27 +65,27 @@ function Tariffs() {
           canEdit ? (
             <Button onClick={() => setEditing("new")}>
               <Plus data-icon="inline-start" />
-              New tariff
+              {t("New tariff")}
             </Button>
           ) : null
         }
       />
       {tariffs.length === 0 ? (
-        <EmptyState title="No tariffs yet" />
+        <EmptyState title={t("No tariffs yet")} />
       ) : (
         <TableCard>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Charge</TableHead>
-                <TableHead>Basis</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead>Carrier</TableHead>
-                <TableHead>Origin</TableHead>
-                <TableHead>Destination</TableHead>
+                <TableHead>{t("Charge")}</TableHead>
+                <TableHead>{t("Basis")}</TableHead>
+                <TableHead className="text-end">{t("Amount")}</TableHead>
+                <TableHead>{t("Carrier")}</TableHead>
+                <TableHead>{t("Origin")}</TableHead>
+                <TableHead>{t("Destination")}</TableHead>
                 {canEdit ? (
                   <TableHead>
-                    <span className="sr-only">Actions</span>
+                    <span className="sr-only">{t("Actions")}</span>
                   </TableHead>
                 ) : null}
               </TableRow>
@@ -95,7 +97,7 @@ function Tariffs() {
                   <TableCell>
                     {BASIS_LABELS[tariff.basis as Basis] ?? tariff.basis}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">
+                  <TableCell className="text-end tabular-nums">
                     {formatMoney(tariff.amountMinor, tariff.currency)}
                   </TableCell>
                   <TableCell>{tariff.carrier || "Any"}</TableCell>
@@ -109,14 +111,14 @@ function Tariffs() {
                           size="sm"
                           onClick={() => setEditing(tariff)}
                         >
-                          Edit
+                          {t("Edit")}
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => setDeleting(tariff)}
                         >
-                          Delete
+                          {t("Delete")}
                         </Button>
                       </div>
                     </TableCell>
@@ -136,7 +138,7 @@ function Tariffs() {
       {deleting ? (
         <ConfirmDialog
           title={`Delete ${deleting.name}?`}
-          confirmLabel="Delete tariff"
+          confirmLabel={t("Delete tariff")}
           destructive
           pending={pending}
           onClose={() => setDeleting(null)}
@@ -145,7 +147,7 @@ function Tariffs() {
             setDeleting(null);
           }}
         >
-          Charges already added to bookings stay.
+          {t("Charges already added to bookings stay.")}
         </ConfirmDialog>
       ) : null}
     </AppShell>
@@ -184,7 +186,7 @@ function TariffDialog({
   return (
     <FormDialog
       title={tariff ? "Edit tariff" : "New tariff"}
-      submitLabel="Save tariff"
+      submitLabel={t("Save tariff")}
       pending={pending}
       wide
       onClose={onClose}
@@ -199,13 +201,13 @@ function TariffDialog({
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
-          label="Charge name"
+          label={t("Charge name")}
           error={errors.name}
           className="sm:col-span-2"
         >
-          <Input {...bind("name")} placeholder="Ocean freight" />
+          <Input {...bind("name")} placeholder={t("Ocean freight")} />
         </Field>
-        <Field label="Basis">
+        <Field label={t("Basis")}>
           <NativeSelect
             value={values.basis}
             onChange={(event) =>
@@ -220,26 +222,28 @@ function TariffDialog({
           </NativeSelect>
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Amount" error={errors.amount}>
+          <Field label={t("Amount")} error={errors.amount}>
             <Input {...bind("amount")} inputMode="decimal" />
           </Field>
-          <Field label="Currency" error={errors.currency}>
+          <CurrencyList />
+          <Field label={t("Currency")} error={errors.currency}>
             <Input
               {...bind("currency")}
               className="uppercase"
               maxLength={3}
-              placeholder="USD"
+              list="currency-codes"
+              placeholder={t("USD")}
             />
           </Field>
         </div>
-        <Field label="Carrier">
-          <Input {...bind("carrier")} placeholder="Any" />
+        <Field label={t("Carrier")}>
+          <Input {...bind("carrier")} placeholder={t("Any")} />
         </Field>
-        <Field label="Origin port">
-          <Input {...bind("originPort")} placeholder="Any" />
+        <Field label={t("Origin port")}>
+          <Input {...bind("originPort")} placeholder={t("Any")} />
         </Field>
-        <Field label="Destination port">
-          <Input {...bind("destinationPort")} placeholder="Any" />
+        <Field label={t("Destination port")}>
+          <Input {...bind("destinationPort")} placeholder={t("Any")} />
         </Field>
       </div>
     </FormDialog>

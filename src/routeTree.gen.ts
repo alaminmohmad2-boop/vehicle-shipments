@@ -10,12 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as HealthRouteImport } from './routes/health'
+import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TariffsRouteImport } from './routes/tariffs'
+import { Route as YardRouteImport } from './routes/yard'
 import { Route as BookingsNewRouteImport } from './routes/bookings/new'
 import { Route as InvoicesIdRouteImport } from './routes/invoices/$id'
 import { Route as TTokenRouteImport } from './routes/t/$token'
 import { Route as ApiAttachmentsIdRouteImport } from './routes/api/attachments/$id'
+import { Route as ApiExportKindRouteImport } from './routes/api/export/$kind'
 import { Route as BookingsIdIndexRouteImport } from './routes/bookings/$id/index'
 import { Route as BookingsIdBillOfLadingRouteImport } from './routes/bookings/$id/bill-of-lading'
 import { Route as ApiBookingsIdAttachmentsRouteImport } from './routes/api/bookings/$id/attachments'
@@ -25,14 +30,34 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HealthRoute = HealthRouteImport.update({
   id: '/health',
   path: '/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TariffsRoute = TariffsRouteImport.update({
   id: '/tariffs',
   path: '/tariffs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const YardRoute = YardRouteImport.update({
+  id: '/yard',
+  path: '/yard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BookingsNewRoute = BookingsNewRouteImport.update({
@@ -55,6 +80,11 @@ const ApiAttachmentsIdRoute = ApiAttachmentsIdRouteImport.update({
   path: '/api/attachments/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiExportKindRoute = ApiExportKindRouteImport.update({
+  id: '/api/export/$kind',
+  path: '/api/export/$kind',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BookingsIdIndexRoute = BookingsIdIndexRouteImport.update({
   id: '/bookings/$id/',
   path: '/bookings/$id/',
@@ -74,24 +104,34 @@ const ApiBookingsIdAttachmentsRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
   '/health': typeof HealthRoute
+  '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
   '/tariffs': typeof TariffsRoute
+  '/yard': typeof YardRoute
   '/bookings/new': typeof BookingsNewRoute
   '/invoices/$id': typeof InvoicesIdRoute
   '/t/$token': typeof TTokenRoute
   '/api/attachments/$id': typeof ApiAttachmentsIdRoute
+  '/api/export/$kind': typeof ApiExportKindRoute
   '/bookings/$id/bill-of-lading': typeof BookingsIdBillOfLadingRoute
   '/bookings/$id/': typeof BookingsIdIndexRoute
   '/api/bookings/$id/attachments': typeof ApiBookingsIdAttachmentsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
   '/health': typeof HealthRoute
+  '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
   '/tariffs': typeof TariffsRoute
+  '/yard': typeof YardRoute
   '/bookings/new': typeof BookingsNewRoute
   '/invoices/$id': typeof InvoicesIdRoute
   '/t/$token': typeof TTokenRoute
   '/api/attachments/$id': typeof ApiAttachmentsIdRoute
+  '/api/export/$kind': typeof ApiExportKindRoute
   '/bookings/$id/bill-of-lading': typeof BookingsIdBillOfLadingRoute
   '/bookings/$id': typeof BookingsIdIndexRoute
   '/api/bookings/$id/attachments': typeof ApiBookingsIdAttachmentsRoute
@@ -99,12 +139,17 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
   '/health': typeof HealthRoute
+  '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
   '/tariffs': typeof TariffsRoute
+  '/yard': typeof YardRoute
   '/bookings/new': typeof BookingsNewRoute
   '/invoices/$id': typeof InvoicesIdRoute
   '/t/$token': typeof TTokenRoute
   '/api/attachments/$id': typeof ApiAttachmentsIdRoute
+  '/api/export/$kind': typeof ApiExportKindRoute
   '/bookings/$id/bill-of-lading': typeof BookingsIdBillOfLadingRoute
   '/bookings/$id/': typeof BookingsIdIndexRoute
   '/api/bookings/$id/attachments': typeof ApiBookingsIdAttachmentsRoute
@@ -113,36 +158,51 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/dashboard'
     | '/health'
+    | '/reports'
+    | '/settings'
     | '/tariffs'
+    | '/yard'
     | '/bookings/new'
     | '/invoices/$id'
     | '/t/$token'
     | '/api/attachments/$id'
+    | '/api/export/$kind'
     | '/bookings/$id/bill-of-lading'
     | '/bookings/$id/'
     | '/api/bookings/$id/attachments'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/dashboard'
     | '/health'
+    | '/reports'
+    | '/settings'
     | '/tariffs'
+    | '/yard'
     | '/bookings/new'
     | '/invoices/$id'
     | '/t/$token'
     | '/api/attachments/$id'
+    | '/api/export/$kind'
     | '/bookings/$id/bill-of-lading'
     | '/bookings/$id'
     | '/api/bookings/$id/attachments'
   id:
     | '__root__'
     | '/'
+    | '/dashboard'
     | '/health'
+    | '/reports'
+    | '/settings'
     | '/tariffs'
+    | '/yard'
     | '/bookings/new'
     | '/invoices/$id'
     | '/t/$token'
     | '/api/attachments/$id'
+    | '/api/export/$kind'
     | '/bookings/$id/bill-of-lading'
     | '/bookings/$id/'
     | '/api/bookings/$id/attachments'
@@ -150,12 +210,17 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DashboardRoute: typeof DashboardRoute
   HealthRoute: typeof HealthRoute
+  ReportsRoute: typeof ReportsRoute
+  SettingsRoute: typeof SettingsRoute
   TariffsRoute: typeof TariffsRoute
+  YardRoute: typeof YardRoute
   BookingsNewRoute: typeof BookingsNewRoute
   InvoicesIdRoute: typeof InvoicesIdRoute
   TTokenRoute: typeof TTokenRoute
   ApiAttachmentsIdRoute: typeof ApiAttachmentsIdRoute
+  ApiExportKindRoute: typeof ApiExportKindRoute
   BookingsIdBillOfLadingRoute: typeof BookingsIdBillOfLadingRoute
   BookingsIdIndexRoute: typeof BookingsIdIndexRoute
   ApiBookingsIdAttachmentsRoute: typeof ApiBookingsIdAttachmentsRoute
@@ -170,6 +235,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/health': {
       id: '/health'
       path: '/health'
@@ -177,11 +249,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tariffs': {
       id: '/tariffs'
       path: '/tariffs'
       fullPath: '/tariffs'
       preLoaderRoute: typeof TariffsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/yard': {
+      id: '/yard'
+      path: '/yard'
+      fullPath: '/yard'
+      preLoaderRoute: typeof YardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bookings/new': {
@@ -212,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAttachmentsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/export/$kind': {
+      id: '/api/export/$kind'
+      path: '/api/export/$kind'
+      fullPath: '/api/export/$kind'
+      preLoaderRoute: typeof ApiExportKindRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/bookings/$id/': {
       id: '/bookings/$id/'
       path: '/bookings/$id'
@@ -238,12 +338,17 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DashboardRoute: DashboardRoute,
   HealthRoute: HealthRoute,
+  ReportsRoute: ReportsRoute,
+  SettingsRoute: SettingsRoute,
   TariffsRoute: TariffsRoute,
+  YardRoute: YardRoute,
   BookingsNewRoute: BookingsNewRoute,
   InvoicesIdRoute: InvoicesIdRoute,
   TTokenRoute: TTokenRoute,
   ApiAttachmentsIdRoute: ApiAttachmentsIdRoute,
+  ApiExportKindRoute: ApiExportKindRoute,
   BookingsIdBillOfLadingRoute: BookingsIdBillOfLadingRoute,
   BookingsIdIndexRoute: BookingsIdIndexRoute,
   ApiBookingsIdAttachmentsRoute: ApiBookingsIdAttachmentsRoute,

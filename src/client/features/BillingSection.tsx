@@ -1,8 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { Plus, Receipt, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ConfirmDialog } from "@/client/components/ConfirmDialog";
 import { EmptyState } from "@/client/components/EmptyState";
+import { CurrencyList } from "@/client/components/CurrencyList";
 import { Field } from "@/client/components/Field";
 import { FormDialog } from "@/client/components/FormDialog";
 import { Badge } from "@/client/components/ui/badge";
@@ -25,7 +26,11 @@ import {
   fieldErrors,
   formatMoney,
   formatTotals,
+  parseAmount,
+  parsePercent,
+  parseRate,
 } from "@/lib/shipping";
+import { getCompany } from "@/serverFunctions/settings";
 import {
   addCharge,
   applyTariffs,
@@ -37,6 +42,7 @@ import {
 import { Section } from "./Section";
 import type { BookingData } from "./types";
 import { z } from "zod";
+import { t } from "@/lib/i18n";
 
 type Invoice = BookingData["billing"]["invoices"][number];
 const today = () => new Date().toISOString().slice(0, 10);
@@ -62,7 +68,7 @@ export function BillingSection({ data }: { data: BookingData }) {
   const uninvoiced = billing.charges.filter((line) => !line.invoiceId);
   return (
     <Section
-      title="Charges and invoices"
+      title={t("Charges and invoices")}
       actions={
         <>
           <Button
@@ -70,7 +76,7 @@ export function BillingSection({ data }: { data: BookingData }) {
             size="sm"
             onClick={() => setDialog("apply")}
           >
-            Apply tariffs
+            {t("Apply tariffs")}
           </Button>
           <Button
             variant="outline"
@@ -78,7 +84,7 @@ export function BillingSection({ data }: { data: BookingData }) {
             onClick={() => setDialog("charge")}
           >
             <Plus data-icon="inline-start" />
-            Add charge
+            {t("Add charge")}
           </Button>
           <Button
             size="sm"
@@ -86,20 +92,20 @@ export function BillingSection({ data }: { data: BookingData }) {
             onClick={() => setDialog("invoice")}
           >
             <Receipt data-icon="inline-start" />
-            Issue invoice
+            {t("Issue invoice")}
           </Button>
         </>
       }
     >
       <dl className="grid gap-3 rounded-xl border border-border bg-card p-4 text-sm sm:grid-cols-2">
         <div>
-          <dt className="text-muted-foreground">Invoiced</dt>
+          <dt className="text-muted-foreground">{t("Invoiced")}</dt>
           <dd data-testid="invoiced-total" className="font-medium tabular-nums">
             {formatTotals(billing.invoiced)}
           </dd>
         </div>
         <div>
-          <dt className="text-muted-foreground">Open balance</dt>
+          <dt className="text-muted-foreground">{t("Open balance")}</dt>
           <dd data-testid="open-balance" className="font-medium tabular-nums">
             {billing.open.length
               ? formatTotals(billing.open)
@@ -109,19 +115,19 @@ export function BillingSection({ data }: { data: BookingData }) {
       </dl>
 
       {billing.charges.length === 0 ? (
-        <EmptyState title="No charges yet" size="sm" />
+        <EmptyState title={t("No charges yet")} size="sm" />
       ) : (
         <TableCard>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Charge</TableHead>
-                <TableHead className="text-right">Qty</TableHead>
-                <TableHead className="text-right">Unit price</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead>Invoice</TableHead>
+                <TableHead>{t("Charge")}</TableHead>
+                <TableHead className="text-end">{t("Qty")}</TableHead>
+                <TableHead className="text-end">{t("Unit price")}</TableHead>
+                <TableHead className="text-end">{t("Amount")}</TableHead>
+                <TableHead>{t("Invoice")}</TableHead>
                 <TableHead>
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">{t("Actions")}</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -129,19 +135,19 @@ export function BillingSection({ data }: { data: BookingData }) {
               {billing.charges.map((line) => (
                 <TableRow key={line.id} data-testid="charge-row">
                   <TableCell>{line.description}</TableCell>
-                  <TableCell className="text-right tabular-nums">
+                  <TableCell className="text-end tabular-nums">
                     {line.quantity}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">
+                  <TableCell className="text-end tabular-nums">
                     {formatMoney(line.unitMinor, line.currency)}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">
+                  <TableCell className="text-end tabular-nums">
                     {formatMoney(line.quantity * line.unitMinor, line.currency)}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {line.invoiceNumber ?? ""}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-end">
                     {line.invoiceId ? null : (
                       <Button
                         variant="ghost"
@@ -172,13 +178,13 @@ export function BillingSection({ data }: { data: BookingData }) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Number</TableHead>
-                <TableHead>Issued</TableHead>
-                <TableHead>Due</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>{t("Number")}</TableHead>
+                <TableHead>{t("Issued")}</TableHead>
+                <TableHead>{t("Due")}</TableHead>
+                <TableHead className="text-end">{t("Total")}</TableHead>
+                <TableHead>{t("Status")}</TableHead>
                 <TableHead>
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">{t("Actions")}</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -189,23 +195,23 @@ export function BillingSection({ data }: { data: BookingData }) {
                     {invoice.number}
                     {invoice.credits ? (
                       <span className="block text-xs text-muted-foreground">
-                        Credits {invoice.credits}
+                        {t("Credits")} {invoice.credits}
                       </span>
                     ) : null}
                   </TableCell>
                   <TableCell>{formatDate(invoice.issueDate)}</TableCell>
                   <TableCell>{formatDate(invoice.dueDate)}</TableCell>
-                  <TableCell className="text-right tabular-nums">
+                  <TableCell className="text-end tabular-nums">
                     {formatTotals(invoice.totals)}
                   </TableCell>
                   <TableCell>
                     {invoice.kind === "credit_note" ? (
-                      <Badge variant="soft">Credit note</Badge>
+                      <Badge variant="soft">{t("Credit note")}</Badge>
                     ) : (
                       <Badge
                         variant={STATUS[invoice.status]?.variant ?? "outline"}
                       >
-                        {STATUS[invoice.status]?.label ?? invoice.status}
+                        {t(STATUS[invoice.status]?.label ?? invoice.status)}
                       </Badge>
                     )}
                   </TableCell>
@@ -219,7 +225,7 @@ export function BillingSection({ data }: { data: BookingData }) {
                           size: "sm",
                         })}
                       >
-                        Open
+                        {t("Open")}
                       </Link>
                       {invoice.kind === "invoice" &&
                       invoice.status === "issued" ? (
@@ -232,14 +238,14 @@ export function BillingSection({ data }: { data: BookingData }) {
                               run(() => markPaid({ data: { id: invoice.id } }))
                             }
                           >
-                            Mark paid
+                            {t("Mark paid")}
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => setVoiding(invoice)}
                           >
-                            Void
+                            {t("Void")}
                           </Button>
                         </>
                       ) : null}
@@ -264,7 +270,7 @@ export function BillingSection({ data }: { data: BookingData }) {
       {voiding ? (
         <ConfirmDialog
           title={`Void ${voiding.number}?`}
-          confirmLabel="Void invoice"
+          confirmLabel={t("Void invoice")}
           destructive
           pending={pending}
           onClose={() => setVoiding(null)}
@@ -273,7 +279,9 @@ export function BillingSection({ data }: { data: BookingData }) {
             setVoiding(null);
           }}
         >
-          A credit note cancels it, and its charges can be invoiced again.
+          {t(
+            "A credit note cancels it, and its charges can be invoiced again.",
+          )}
         </ConfirmDialog>
       ) : null}
     </Section>
@@ -292,25 +300,25 @@ function ApplyDialog({
   const { run, pending } = useAction();
   return (
     <FormDialog
-      title="Apply tariffs"
-      submitLabel="Apply"
+      title={t("Apply tariffs")}
+      submitLabel={t("Apply")}
       pending={pending}
       onClose={onClose}
       onSubmit={async () => {
         if (days && !/^\d{1,4}$/.test(days))
-          return setError("Enter a whole number of days");
+          return setError(t("Enter a whole number of days"));
         const result = await run(() =>
           applyTariffs({ data: { bookingId, days: Number(days || 0) } }),
         );
         if (result) onClose();
       }}
     >
-      <Field label="Storage days" error={error}>
+      <Field label={t("Storage days")} error={error}>
         <Input
           value={days}
           onChange={(event) => setDays(event.target.value)}
           inputMode="numeric"
-          placeholder="0"
+          placeholder={t("0")}
         />
       </Field>
     </FormDialog>
@@ -349,8 +357,8 @@ function ChargeDialog({
   });
   return (
     <FormDialog
-      title="Add charge"
-      submitLabel="Save charge"
+      title={t("Add charge")}
+      submitLabel={t("Save charge")}
       pending={pending}
       onClose={onClose}
       onSubmit={async () => {
@@ -362,22 +370,24 @@ function ChargeDialog({
         if (done) onClose();
       }}
     >
-      <Field label="Description" error={errors.description}>
+      <Field label={t("Description")} error={errors.description}>
         <Input {...bind("description")} />
       </Field>
       <div className="grid grid-cols-3 gap-3">
-        <Field label="Quantity" error={errors.quantity}>
+        <Field label={t("Quantity")} error={errors.quantity}>
           <Input {...bind("quantity")} inputMode="numeric" />
         </Field>
-        <Field label="Unit price" error={errors.unitPrice}>
+        <CurrencyList />
+        <Field label={t("Unit price")} error={errors.unitPrice}>
           <Input {...bind("unitPrice")} inputMode="decimal" />
         </Field>
-        <Field label="Currency" error={errors.currency}>
+        <Field label={t("Currency")} error={errors.currency}>
           <Input
             {...bind("currency")}
             className="uppercase"
             maxLength={3}
-            placeholder="USD"
+            list="currency-codes"
+            placeholder={t("USD")}
           />
         </Field>
       </div>
@@ -392,15 +402,51 @@ function InvoiceDialog({
   bookingId: string;
   onClose: () => void;
 }) {
-  const [values, setValues] = useState({ issueDate: today(), dueDate: in30() });
+  const [values, setValues] = useState({
+    issueDate: today(),
+    dueDate: in30(),
+    taxPercent: "0",
+    fee: "",
+    feeCurrency: "USD",
+    exchangeRate: "",
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const { run, pending } = useAction();
+  useEffect(() => {
+    getCompany().then(({ company }) => {
+      const pct = Number((company.defaultTaxBps / 100).toFixed(2));
+      setValues((v) => ({ ...v, taxPercent: String(pct) }));
+    });
+  }, []);
+  const bind = (key: keyof typeof values) => ({
+    value: values[key],
+    onChange: (event: { target: { value: string } }) =>
+      setValues({ ...values, [key]: event.target.value }),
+  });
   return (
     <FormDialog
-      title="Issue invoice"
-      submitLabel="Issue"
+      title={t("Issue invoice")}
+      submitLabel={t("Issue")}
       pending={pending}
       onClose={onClose}
       onSubmit={async () => {
+        const next: Record<string, string> = {};
+        if (parsePercent(values.taxPercent) === null)
+          next.taxPercent = t("Enter a percentage from 0 to 100");
+        if (
+          values.fee.trim() !== "" &&
+          (parseAmount(values.fee) === null || parseAmount(values.fee)! < 0)
+        )
+          next.fee = t("Enter an amount such as 25 or 12.50");
+        if (
+          values.fee.trim() !== "" &&
+          !/^[A-Za-z]{3}$/.test(values.feeCurrency)
+        )
+          next.feeCurrency = t("Use a 3-letter code such as USD");
+        if (parseRate(values.exchangeRate) === null)
+          next.exchangeRate = t("Enter a rate such as 2600");
+        setErrors(next);
+        if (Object.keys(next).length) return;
         const done = await run(() =>
           issueInvoice({ data: { ...values, bookingId } }),
         );
@@ -408,29 +454,44 @@ function InvoiceDialog({
       }}
     >
       <p className="text-sm text-muted-foreground">
-        Every charge not yet invoiced goes on it. Issued invoices can't be
-        edited.
+        {t(
+          "Every charge not yet invoiced goes on it. Issued invoices can't be edited.",
+        )}
       </p>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Issue date">
-          <Input
-            type="date"
-            value={values.issueDate}
-            onChange={(event) =>
-              setValues({ ...values, issueDate: event.target.value })
-            }
-          />
+        <Field label={t("Issue date")}>
+          <Input type="date" {...bind("issueDate")} />
         </Field>
-        <Field label="Due date">
+        <Field label={t("Due date")}>
+          <Input type="date" {...bind("dueDate")} />
+        </Field>
+      </div>
+      <Field label={t("Tax percent")} error={errors.taxPercent}>
+        <Input {...bind("taxPercent")} inputMode="decimal" />
+      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label={t("Fee")} error={errors.fee}>
+          <Input {...bind("fee")} inputMode="decimal" placeholder="0" />
+        </Field>
+        <Field label={t("Fee currency")} error={errors.feeCurrency}>
           <Input
-            type="date"
-            value={values.dueDate}
-            onChange={(event) =>
-              setValues({ ...values, dueDate: event.target.value })
-            }
+            {...bind("feeCurrency")}
+            className="uppercase"
+            maxLength={3}
+            list="currency-codes"
           />
         </Field>
       </div>
+      <Field
+        label={t("Exchange rate (SDG for 1 USD, optional)")}
+        error={errors.exchangeRate}
+      >
+        <Input
+          {...bind("exchangeRate")}
+          inputMode="decimal"
+          placeholder="2600"
+        />
+      </Field>
     </FormDialog>
   );
 }

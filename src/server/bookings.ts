@@ -1,7 +1,9 @@
 import { isAdmin } from "@every-app/sdk/server";
 import { env } from "cloudflare:workers";
 import { and, asc, desc, eq, sql, type SQL } from "drizzle-orm";
+import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
+import { buildMessage, notifyCustomer } from "./notify";
 import { db } from "@/db";
 import {
   attachments,
@@ -334,19 +336,52 @@ async function addEvent(
 ) {
   await rememberUser(user);
   await db.batch([
-    db
-      .insert(statusEvents)
-      .values({
-        id: crypto.randomUUID(),
-        bookingId,
-        createdBy: user.id,
-        ...event,
-      }),
+    db.insert(statusEvents).values({
+      id: crypto.randomUUID(),
+      bookingId,
+      createdBy: user.id,
+      ...event,
+    }),
     db
       .update(bookings)
       .set({ status: latestStatus(bookingId) })
       .where(eq(bookings.id, bookingId)),
   ]);
+  await sendProgressNotice(user, bookingId, event);
+}
+
+/** Tells the customer about a new milestone (recorded; sent only if a provider is set up). */
+async function sendProgressNotice(
+  user: Viewer,
+  bookingId: string,
+  event: { status: Status; location: string },
+) {
+  try {
+    const booking = await requireBooking(user, bookingId);
+    if (!booking.customerEmail) return;
+    let trackingUrl: string | null = null;
+    if (booking.trackingToken) {
+      try {
+        trackingUrl = new URL(`/t/${booking.trackingToken}`, getRequest().url)
+          .href;
+      } catch {
+        trackingUrl = null;
+      }
+    }
+    await notifyCustomer(
+      user.orgId,
+      bookingId,
+      buildMessage({
+        to: booking.customerEmail,
+        bookingNumber: booking.number,
+        status: event.status,
+        location: event.location,
+        trackingUrl,
+      }),
+    );
+  } catch {
+    // Never block a status change.
+  }
 }
 
 export async function recordStatus(
